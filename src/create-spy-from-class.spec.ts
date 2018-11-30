@@ -154,6 +154,20 @@ describe('createSpyFromClass', () => {
         expect(actualResult).toBe(fakeValue);
       });
     });
+
+    describe('Property functions', () => {
+      Given(() => {
+        fakeClassSpy.propertyFunction.and.returnValue(fakeValue);
+      });
+
+      When(() => {
+        actualResult = fakeClassSpy.syncMethod();
+      });
+
+      Then(() => {
+        expect(actualResult).toBe(fakeValue);
+      });
+    });
   });
 
   describe('Fake Child Class', () => {

@@ -5,6 +5,10 @@ export class FakeClass {
 
   public someProp: number = 1;
 
+  public propertyFunction = () => {
+    return '';
+  }
+
   public syncMethod() {
     return '';
   }
