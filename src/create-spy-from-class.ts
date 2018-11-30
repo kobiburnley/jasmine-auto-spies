@@ -13,7 +13,7 @@ export function createSpyFromClass<T>(
 ): Spy<T> {
   const proto = ObjectClass.prototype;
 
-  const spies: Map<PropertyKey, Spy<T>> = new Map();
+  const spies: Map<PropertyKey, jasmine.Spy> = new Map();
 
   return new Proxy({} as Spy<T>, {
     get: (target, p) => {
@@ -29,7 +29,7 @@ export function createSpyFromClass<T>(
 
       const methodName = String(p);
 
-      let spyFunction;
+      let spyFunction: jasmine.Spy;
 
       if (
         (providedPromiseMethodNames &&
