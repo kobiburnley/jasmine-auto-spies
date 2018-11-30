@@ -8,38 +8,50 @@ const Reflect = root.Reflect;
 
 export function createSpyFromClass<T>(
   ObjectClass: { new (...args: any[]): T; [key: string]: any },
-  providedPromiseMethodNames?: string[],
-  providedObservableMethodNames?: string[]
+  providedPromiseMethodNames?: PropertyKey[],
+  providedObservableMethodNames?: PropertyKey[]
 ): Spy<T> {
   const proto = ObjectClass.prototype;
-  const methodNames = getAllMethodNames(proto);
 
-  const autoSpy: any = {};
+  const spies: Map<PropertyKey, Spy<T>> = new Map();
 
-  methodNames.forEach(methodName => {
-    const returnTypeClass = Reflect.getMetadata(
-      'design:returntype',
-      proto,
-      methodName
-    );
+  return new Proxy({} as Spy<T>, {
+    get: (target, p) => {
+      if (spies.has(p)) {
+        return spies.get(p);
+      }
 
-    if (
-      (providedPromiseMethodNames &&
-        providedPromiseMethodNames.indexOf(methodName) !== -1) ||
-      returnTypeClass === Promise
-    ) {
-      autoSpy[methodName] = createPromiseSpyFunction(methodName);
-    } else if (
-      (providedObservableMethodNames &&
-        providedObservableMethodNames.indexOf(methodName) !== -1) ||
-      returnTypeClass === Observable
-    ) {
-      autoSpy[methodName] = createObservableSpyFunction(methodName);
-    } else {
-      autoSpy[methodName] = jasmine.createSpy(methodName);
+      const returnTypeClass = Reflect.getMetadata(
+        'design:returntype',
+        proto,
+        p
+      );
+
+      const methodName = String(p);
+
+      let spyFunction;
+
+      if (
+        (providedPromiseMethodNames &&
+          providedPromiseMethodNames.indexOf(methodName) !== -1) ||
+        returnTypeClass === Promise
+      ) {
+        spyFunction = createPromiseSpyFunction(methodName);
+      } else if (
+        (providedObservableMethodNames &&
+          providedObservableMethodNames.indexOf(methodName) !== -1) ||
+        returnTypeClass === Observable
+      ) {
+        spyFunction = createObservableSpyFunction(methodName);
+      } else {
+        spyFunction = jasmine.createSpy(methodName);
+      }
+
+      spies.set(p, spyFunction);
+
+      return spyFunction;
     }
   });
-  return autoSpy as Spy<T>;
 }
 
 function createObservableSpyFunction(name: string) {
